@@ -1,5 +1,6 @@
 import aiohttp
 import asyncio
+import random
 
 import uuid
 
@@ -13,6 +14,12 @@ try:
 except FileNotFoundError:
     proxies = set()
 
+try:
+    with open("questions.txt") as file:
+        questions = [line.strip() for line in file.readlines()]
+except FileNotFoundError:
+    questions = []
+
 
 def get_proxy():
     if not proxies:
@@ -21,6 +28,10 @@ def get_proxy():
 
 
 async def send_questions(username: str, question: str, amount: int):
+    if not question and not questions:
+        print("No questions found")
+        exit()
+
     async with aiohttp.ClientSession() as session:
         for _ in tqdm(range(amount), desc="Sending questions"):
             proxy = get_proxy()
@@ -34,7 +45,7 @@ async def send_questions(username: str, question: str, amount: int):
                     URL,
                     data={
                         "username": username,
-                        "question": question,
+                        "question": question or random.choice(questions),
                         "deviceId": str(uuid.uuid4()),
                         "gameSlug": "",
                         "referrer": "https://l.instagram.com/",
@@ -64,7 +75,7 @@ async def main():
     )
 
     username = input("Enter username: ")
-    question = input("Enter question: ")
+    question = input("Enter question (leave empty to send random questions): ")
 
     while True:
         try:
